@@ -1,0 +1,11 @@
+﻿{
+  "data": [
+    {
+      "TableName": "t119",
+      "Condition": "equal",
+      "Column": "c04",
+      "FK": "t111.id",
+      "Operator": "="
+    }
+  ]
+}
