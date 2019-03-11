@@ -8,6 +8,8 @@ namespace smso_migration
     {
         public string TableName { get; set; }
 
+        public string Description { get; set; }
+
         public string Condition { get; set; }
 
         public string Column { get; set; }

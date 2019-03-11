@@ -1,0 +1,121 @@
+{
+  "definitions": [
+    {
+      "TableName": "czys_pay",
+      "Condition": "equals",
+      "Description": "",
+      "Column": "DWID",
+      "FK": "t111.c01",
+      "Operator": "=",
+      "Value": 510031600
+    },
+    {
+      "TableName": "fund_audit_record",
+      "Condition": "equals",
+      "Description": "",
+      "Column": "unit_id",
+      "FK": "t111.c01",
+      "Operator": "=",
+      "Value": 510031600
+    },
+    {
+      "TableName": "t117",
+      "Condition": "equals",
+      "Description": "基层单位职员津补贴表",
+      "Column": "c02",
+      "FK": "t111.id",
+      "Operator": "=",
+      "Value": 32
+    },
+    {
+      "TableName": "t125",
+      "Condition": "equals",
+      "Description": "基层单位人员工资信息",
+      "Column": "c05",
+      "FK": "t111.id",
+      "Operator": "=",
+      "Value": 32
+    },
+    {
+      "TableName": "t126",
+      "Condition": "equals",
+      "Description": "基层单位人员基础信息",
+      "Column": "c01",
+      "FK": "t111.id",
+      "Operator": "=",
+      "Value": 32
+    },
+    {
+      "TableName": "t173",
+      "Condition": "equals",
+      "Description": "工资测算记录表",
+      "Column": "unitId",
+      "FK": "t111.id",
+      "Operator": "=",
+      "Value": 32
+    },
+    {
+      "TableName": "t179",
+      "Condition": "equals",
+      "Description": "测算失败记录表",
+      "Column": "unitId",
+      "FK": "t111.id",
+      "Operator": "=",
+      "Value": 32
+    },
+    {
+      "TableName": "t112",
+      "Condition": "equals",
+      "Description": "基层单位编制表",
+      "Column": "c01",
+      "FK": "t111.id",
+      "Operator": "=",
+      "Value": 32
+    },
+    {
+      "TableName": "t113",
+      "Condition": "equals",
+      "Description": "基层单位部门表",
+      "Column": "c01",
+      "FK": "t111.id",
+      "Operator": "=",
+      "Value": 32
+    },
+    {
+      "TableName": "t130",
+      "Condition": "equals",
+      "Description": "",
+      "Column": "c03",
+      "FK": "t111.id",
+      "Operator": "=",
+      "Value": 32
+    },
+    {
+      "TableName": "t115",
+      "Condition": "equals",
+      "Description": "",
+      "Column": "c02",
+      "FK": "t111.id",
+      "Operator": "=",
+      "Value": 32
+    },
+    {
+      "TableName": "t119",
+      "Condition": "equals",
+      "Description": "",
+      "Column": "c04",
+      "FK": "t111.id",
+      "Operator": "=",
+      "Value": 32
+    },
+    {
+      "TableName": "fund_change_detail",
+      "Condition": "contains",
+      "Description": "",
+      "Column": "unit_id",
+      "FK": "t111.id",
+      "Operator": "=",
+      "Value": 32
+    }
+  ]
+}
