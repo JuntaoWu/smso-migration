@@ -14,9 +14,17 @@ namespace smso_migration
 
         public string Column { get; set; }
 
+        public string ForeignTable { get; set; }
+
         public string FK { get; set; }
 
+        public string Filter { get; set; }
+
         public string Operator { get; set; }
+
+        public string Value { get; set; }
+
+        public string ExtraFilter { get; set; }
 
     }
 }

@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "smso-migration": {
+      "commandName": "Project",
+      "commandLineArgs": "smso smso-migration-v1 unit-code-list.txt"
+    }
+  }
+}
