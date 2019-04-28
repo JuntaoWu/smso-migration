@@ -15,13 +15,14 @@ namespace smso_migration
         {
             if (args.Length < 3)
             {
-                Console.WriteLine($"Usage: migration.exe srcDBName destDBName unitCode|unitCodeList.txt");
+                Console.WriteLine($"Usage: migration.exe srcDBName destDBName unitCode|unitCodeList.txt [log.txt]");
                 return;
             }
 
             string srcDBName = args[0] ?? "smso";
             string destDBName = args[1] ?? "smso-migration";
             string unitCodeParam = args[2] ?? "510031600";
+            string outputFileName = args.Length >= 4 ? args[3] : "log.txt";
 
             List<string> unitCodeList = new List<string>();
 
@@ -45,12 +46,17 @@ namespace smso_migration
 
             List<string> tableNames = GetTableNames(srcDBName, connectionString);
 
-            unitCodeList.AsParallel().ForAll(unitCode =>
+            if (File.Exists(outputFileName))
             {
-                ExtractUnitData(destDBName, connectionString, tableNames, definitions, unitCode);
+                File.Delete(outputFileName);
+            }
+
+            unitCodeList.ForEach(unitCode =>
+            {
+                ExtractUnitData(destDBName, connectionString, tableNames, definitions, unitCode, outputFileName);
             });
 
-            ExtractCommonData(destDBName, connectionString, tableNames, definitions);
+            ExtractCommonData(destDBName, connectionString, tableNames, definitions, outputFileName);
 
             Console.WriteLine("Migration end. Press any key to continue...");
             Console.ReadKey();
@@ -104,7 +110,7 @@ namespace smso_migration
             return filteredDefinitions.ToList();
         }
 
-        private static void ExtractUnitData(string destDBName, string connectionString, List<string> tableNames, List<TableDefinition> definitions, string unitCode)
+        private static void ExtractUnitData(string destDBName, string connectionString, List<string> tableNames, List<TableDefinition> definitions, string unitCode, string outputFileName)
         {
             // read FK value first.
             string preSqlCommandText = $"SELECT * FROM t111 WHERE c01 = '{unitCode}'";
@@ -126,7 +132,7 @@ namespace smso_migration
             {
                 var filteredDefinitions = GetMatchedTableDefinitions(tableName, definitions);
 
-                filteredDefinitions.AsParallel().ForAll(definition =>
+                filteredDefinitions.ForEach(definition =>
                 {
                     string value = pairs[definition.Value].ToString();
                     string extraFilter = string.IsNullOrWhiteSpace(definition.ExtraFilter) ? "" : $"AND {definition.ExtraFilter}";
@@ -136,11 +142,17 @@ namespace smso_migration
 
                     Console.WriteLine(sqlCommandText);
 
+                    Task.Factory.StartNew(() =>
+                    {
+                        File.AppendAllLines(outputFileName, new string[] { sqlCommandText });
+                    }, TaskCreationOptions.PreferFairness);
+                    
                     using (MySqlConnection mySqlConnection = new MySqlConnection(connectionString))
                     {
                         mySqlConnection.Open();
 
                         MySqlCommand command = mySqlConnection.CreateCommand();
+                        command.CommandTimeout = 1200;
                         command.CommandText = sqlCommandText;
                         command.ExecuteNonQuery();
                     }
@@ -149,20 +161,25 @@ namespace smso_migration
             });
         }
 
-        private static void ExtractCommonData(string destDBName, string connectionString, List<string> tableNames, List<TableDefinition> definitions)
+        private static void ExtractCommonData(string destDBName, string connectionString, List<string> tableNames, List<TableDefinition> definitions, string outputFileName)
         {
-            tableNames.Where(tableName => !IsTableMatched(tableName, definitions)).AsParallel().ForAll(tableName =>
+            tableNames.Where(tableName => !IsTableMatched(tableName, definitions)).ToList().ForEach(tableName =>
             {
                 // copy table now.
                 string sqlCommandText = $"CREATE TABLE IF NOT EXISTS `{destDBName}`.`{tableName}` LIKE {tableName}; INSERT INTO `{destDBName}`.`{tableName}` SELECT {tableName}.* FROM {tableName}";
 
                 Console.WriteLine(sqlCommandText);
+                Task.Factory.StartNew(() =>
+                {
+                    File.AppendAllLines(outputFileName, new string[] { sqlCommandText });
+                }, TaskCreationOptions.PreferFairness);
 
                 using (MySqlConnection mySqlConnection = new MySqlConnection(connectionString))
                 {
                     mySqlConnection.Open();
 
                     MySqlCommand command = mySqlConnection.CreateCommand();
+                    command.CommandTimeout = 1200;
                     command.CommandText = sqlCommandText;
                     command.ExecuteNonQuery();
                 }
