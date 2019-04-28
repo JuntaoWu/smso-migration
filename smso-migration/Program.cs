@@ -11,18 +11,20 @@ namespace smso_migration
 {
     class Program
     {
+        private static List<string> TableNames { get; set; }
+
         static void Main(string[] args)
         {
             if (args.Length < 3)
             {
-                Console.WriteLine($"Usage: migration.exe srcDBName destDBName unitCode|unitCodeList.txt [log.txt]");
+                Console.WriteLine("Usage: migration.exe srcDBName destDBName unitCode|unitCodeList.txt [outputFileName]");
                 return;
             }
 
             string srcDBName = args[0] ?? "smso";
             string destDBName = args[1] ?? "smso-migration";
             string unitCodeParam = args[2] ?? "510031600";
-            string outputFileName = args.Length >= 4 ? args[3] : "log.txt";
+            string outputFileName = args.Length >= 4 ? args[3] : "script.sql";
 
             List<string> unitCodeList = new List<string>();
 
@@ -44,22 +46,67 @@ namespace smso_migration
             var connectionString = configuration["connectionString"];
             List<TableDefinition> definitions = configuration.GetSection("definitions").Get<TableDefinition[]>().ToList();
 
-            List<string> tableNames = GetTableNames(srcDBName, connectionString);
+            TableNames = GetTableNames(srcDBName, connectionString);
 
-            if (File.Exists(outputFileName))
+            string ext = outputFileName.LastIndexOf('.') == -1 ? "sql" : outputFileName.Substring(outputFileName.LastIndexOf('.') + 1);
+
+            string scriptCommonFileName = $"{outputFileName.Split('.')[0]}-common.{ext}";
+            string scriptUnitFileName = $"{outputFileName.Split('.')[0]}-unit.{ext}";
+
+            if (File.Exists(scriptCommonFileName))
             {
-                File.Delete(outputFileName);
+                File.Delete(scriptCommonFileName);
+            }
+            if (File.Exists(scriptUnitFileName))
+            {
+                File.Delete(scriptUnitFileName);
             }
 
+            List<string> scriptCommonList = new List<string>();
+
+            var sqlCreateDatabase = CreateDatabase(destDBName, scriptCommonFileName);
+            var sqlCommonData = ExtractCommonData(destDBName, definitions, scriptCommonFileName);
+
+            scriptCommonList.AddRange(sqlCreateDatabase);
+            scriptCommonList.AddRange(sqlCommonData);
+
+            WriteLog(scriptCommonFileName, scriptCommonList);
+
+            List<string> scriptUnitList = new List<string>();
             unitCodeList.ForEach(unitCode =>
             {
-                ExtractUnitData(destDBName, connectionString, tableNames, definitions, unitCode, outputFileName);
+                Dictionary<string, object> unitDataDictionary = GetUnitData(connectionString, unitCode);
+                var sqlList = ExtractUnitData(destDBName, definitions, unitDataDictionary, scriptUnitFileName);
+                scriptUnitList.AddRange(sqlList);
             });
 
-            ExtractCommonData(destDBName, connectionString, tableNames, definitions, outputFileName);
+            WriteLog(scriptUnitFileName, scriptUnitList);
+
+            ExecuteSqlCommandList(connectionString, scriptCommonList.Concat(scriptUnitList).ToList());
 
             Console.WriteLine("Migration end. Press any key to continue...");
             Console.ReadKey();
+        }
+
+        private static void ExecuteSqlCommandList(string connectionString, List<string> sqlCommandList)
+        {
+            sqlCommandList.ForEach(sqlCommandText =>
+            {
+                using (MySqlConnection mySqlConnection = new MySqlConnection(connectionString))
+                {
+                    mySqlConnection.Open();
+
+                    MySqlCommand command = mySqlConnection.CreateCommand();
+                    command.CommandTimeout = 1200;
+                    command.CommandText = sqlCommandText;
+
+                    Console.WriteLine(sqlCommandText);
+
+                    int rows = command.ExecuteNonQuery();
+
+                    Console.WriteLine($"Affected rows: {rows}");
+                }
+            });
         }
 
         private static List<string> GetTableNames(string srcDBName, string connectionString)
@@ -90,6 +137,27 @@ namespace smso_migration
             return matchedDefinitions != null && matchedDefinitions.Count > 0;
         }
 
+        private static void WriteLog(string outputFileName, List<string> textLines)
+        {
+            Console.WriteLine($"Write scripts to {outputFileName}");
+            File.AppendAllLines(outputFileName, textLines);
+            //Task.Factory.StartNew(() =>
+            //{
+            //    File.AppendAllLines(outputFileName, new string[] { text });
+            //}, TaskCreationOptions.PreferFairness);
+        }
+
+        private static List<string> CreateDatabase(string databaseName, string outputFileName)
+        {
+            List<string> sqlCommandList = new List<string>();
+
+            string sqlCommandText = $"DROP DATABASE IF EXISTS `{databaseName}`; Create DATABASE `{databaseName}` DEFAULT CHARACTER SET utf8;";
+
+            sqlCommandList.Add(sqlCommandText);
+
+            return sqlCommandList;
+        }
+
         private static List<TableDefinition> GetMatchedTableDefinitions(string tableName, List<TableDefinition> definitions)
         {
             var filteredDefinitions = definitions.Where(def =>
@@ -110,7 +178,30 @@ namespace smso_migration
             return filteredDefinitions.ToList();
         }
 
-        private static void ExtractUnitData(string destDBName, string connectionString, List<string> tableNames, List<TableDefinition> definitions, string unitCode, string outputFileName)
+        private static List<string> ExtractUnitData(string destDBName, List<TableDefinition> definitions, Dictionary<string, object> unitDataDictionary, string outputFileName)
+        {
+            List<string> sqlCommandList = new List<string>();
+
+            TableNames.Where(tableName => IsTableMatched(tableName, definitions)).ToList().ForEach(tableName =>
+            {
+                var filteredDefinitions = GetMatchedTableDefinitions(tableName, definitions);
+
+                filteredDefinitions.ForEach(definition =>
+                {
+                    string value = unitDataDictionary[definition.Value].ToString();
+                    string extraFilter = string.IsNullOrWhiteSpace(definition.ExtraFilter) ? "" : $"AND {definition.ExtraFilter}";
+
+                    // copy table sqlCommandText.
+                    string sqlCommandText = $"CREATE TABLE IF NOT EXISTS `{destDBName}`.`{tableName}` LIKE {tableName}; INSERT INTO `{destDBName}`.`{tableName}` SELECT {tableName}.* FROM {tableName} JOIN {definition.ForeignTable} ON {tableName}.{definition.Column} = {definition.FK} AND {definition.Filter} {definition.Operator} '{value}' {extraFilter}";
+
+                    sqlCommandList.Add(sqlCommandText);
+                });
+            });
+
+            return sqlCommandList;
+        }
+
+        private static Dictionary<string, object> GetUnitData(string connectionString, string unitCode)
         {
             // read FK value first.
             string preSqlCommandText = $"SELECT * FROM t111 WHERE c01 = '{unitCode}'";
@@ -128,62 +219,22 @@ namespace smso_migration
                 pairs = Enumerable.Range(0, reader.FieldCount).ToDictionary(reader.GetName, reader.GetValue);
             }
 
-            tableNames.Where(tableName => IsTableMatched(tableName, definitions)).ToList().ForEach(tableName =>
-            {
-                var filteredDefinitions = GetMatchedTableDefinitions(tableName, definitions);
-
-                filteredDefinitions.ForEach(definition =>
-                {
-                    string value = pairs[definition.Value].ToString();
-                    string extraFilter = string.IsNullOrWhiteSpace(definition.ExtraFilter) ? "" : $"AND {definition.ExtraFilter}";
-
-                    // copy table now.
-                    string sqlCommandText = $"CREATE TABLE IF NOT EXISTS `{destDBName}`.`{tableName}` LIKE {tableName}; INSERT INTO `{destDBName}`.`{tableName}` SELECT {tableName}.* FROM {tableName} JOIN {definition.ForeignTable} ON {tableName}.{definition.Column} = {definition.FK} AND {definition.Filter} {definition.Operator} '{value}' {extraFilter}";
-
-                    Console.WriteLine(sqlCommandText);
-
-                    Task.Factory.StartNew(() =>
-                    {
-                        File.AppendAllLines(outputFileName, new string[] { sqlCommandText });
-                    }, TaskCreationOptions.PreferFairness);
-                    
-                    using (MySqlConnection mySqlConnection = new MySqlConnection(connectionString))
-                    {
-                        mySqlConnection.Open();
-
-                        MySqlCommand command = mySqlConnection.CreateCommand();
-                        command.CommandTimeout = 1200;
-                        command.CommandText = sqlCommandText;
-                        command.ExecuteNonQuery();
-                    }
-                });
-
-            });
+            return pairs;
         }
 
-        private static void ExtractCommonData(string destDBName, string connectionString, List<string> tableNames, List<TableDefinition> definitions, string outputFileName)
+        private static List<string> ExtractCommonData(string destDBName, List<TableDefinition> definitions, string outputFileName)
         {
-            tableNames.Where(tableName => !IsTableMatched(tableName, definitions)).ToList().ForEach(tableName =>
+            List<string> sqlCommandList = new List<string>();
+
+            TableNames.Where(tableName => !IsTableMatched(tableName, definitions)).ToList().ForEach(tableName =>
             {
                 // copy table now.
                 string sqlCommandText = $"CREATE TABLE IF NOT EXISTS `{destDBName}`.`{tableName}` LIKE {tableName}; INSERT INTO `{destDBName}`.`{tableName}` SELECT {tableName}.* FROM {tableName}";
 
-                Console.WriteLine(sqlCommandText);
-                Task.Factory.StartNew(() =>
-                {
-                    File.AppendAllLines(outputFileName, new string[] { sqlCommandText });
-                }, TaskCreationOptions.PreferFairness);
-
-                using (MySqlConnection mySqlConnection = new MySqlConnection(connectionString))
-                {
-                    mySqlConnection.Open();
-
-                    MySqlCommand command = mySqlConnection.CreateCommand();
-                    command.CommandTimeout = 1200;
-                    command.CommandText = sqlCommandText;
-                    command.ExecuteNonQuery();
-                }
+                sqlCommandList.Add(sqlCommandText);
             });
+
+            return sqlCommandList;
         }
     }
 }
