@@ -1,9 +1,15 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.27428.2043
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.28803.202
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "smso-migration", "smso-migration\smso-migration.csproj", "{635F2BA4-057C-42AF-B157-E407E8A8DC29}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "smso-migration", "smso-migration\smso-migration.csproj", "{635F2BA4-057C-42AF-B157-E407E8A8DC29}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "smso-migration-client", "smso-migration-client\smso-migration-client.csproj", "{C85A219F-F31C-4B49-BAB8-CA7BBCBE7D01}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SmsoMigration.Domain", "SmsoMigration.Domain\SmsoMigration.Domain.csproj", "{FB5BDFF9-C932-4862-93C1-F8269FBE720F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PrismAppTemplate", "PrismAppTemplate\PrismAppTemplate.csproj", "{269582E8-F7E2-4664-9948-34649D8FFC39}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,6 +21,18 @@ Global
 		{635F2BA4-057C-42AF-B157-E407E8A8DC29}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{635F2BA4-057C-42AF-B157-E407E8A8DC29}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{635F2BA4-057C-42AF-B157-E407E8A8DC29}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C85A219F-F31C-4B49-BAB8-CA7BBCBE7D01}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C85A219F-F31C-4B49-BAB8-CA7BBCBE7D01}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C85A219F-F31C-4B49-BAB8-CA7BBCBE7D01}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C85A219F-F31C-4B49-BAB8-CA7BBCBE7D01}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FB5BDFF9-C932-4862-93C1-F8269FBE720F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FB5BDFF9-C932-4862-93C1-F8269FBE720F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FB5BDFF9-C932-4862-93C1-F8269FBE720F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FB5BDFF9-C932-4862-93C1-F8269FBE720F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{269582E8-F7E2-4664-9948-34649D8FFC39}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{269582E8-F7E2-4664-9948-34649D8FFC39}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{269582E8-F7E2-4664-9948-34649D8FFC39}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{269582E8-F7E2-4664-9948-34649D8FFC39}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
