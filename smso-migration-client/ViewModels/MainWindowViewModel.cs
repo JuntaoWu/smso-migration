@@ -68,11 +68,11 @@ namespace smso_migration_client
         {
             if (e.GeneratingType == GeneratingType.Common)
             {
-                this.ScriptsCommon.AddRange(e.Scripts);
+                this.ScriptsCommon = this.ScriptsCommon.Concat(e.Scripts).ToList();
             }
             else
             {
-                this.ScriptsUnit.AddRange(e.Scripts);
+                this.ScriptsUnit = this.ScriptsUnit.Concat(e.Scripts).ToList();
             }
         }
 

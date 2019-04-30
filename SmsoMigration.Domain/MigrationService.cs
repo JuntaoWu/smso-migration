@@ -85,7 +85,6 @@ namespace SmsoMigration.Domain
             });
         }
 
-
         private void ExecuteSqlCommandList(string connectionString, List<string> sqlCommandList)
         {
             sqlCommandList.ForEach(sqlCommandText =>
@@ -153,7 +152,7 @@ namespace SmsoMigration.Domain
         {
             List<string> sqlCommandList = new List<string>();
 
-            string sqlCommandText = $"Create DATABASE `{databaseName}` DEFAULT CHARACTER SET utf8 IF NOT EXISTS;";
+            string sqlCommandText = $"Create DATABASE IF NOT EXISTS `{databaseName}` DEFAULT CHARACTER SET utf8 ;";
 
             sqlCommandList.Add(sqlCommandText);
 
@@ -194,7 +193,7 @@ namespace SmsoMigration.Domain
                     string extraFilter = string.IsNullOrWhiteSpace(definition.ExtraFilter) ? "" : $"AND {definition.ExtraFilter}";
 
                     // copy table sqlCommandText.
-                    string sqlCommandText = $"CREATE TABLE IF NOT EXISTS `{destDBName}`.`{tableName}` LIKE {tableName}; INSERT INTO `{destDBName}`.`{tableName}` SELECT {tableName}.* FROM `{srcDBName}`.`{tableName}` JOIN `{srcDBName}`.`{definition.ForeignTable}` ON {tableName}.{definition.Column} = {definition.FK} AND {definition.Filter} {definition.Operator} '{value}' {extraFilter}";
+                    string sqlCommandText = $"CREATE TABLE IF NOT EXISTS `{destDBName}`.`{tableName}` LIKE `{srcDBName}`.`{tableName}`; INSERT INTO `{destDBName}`.`{tableName}` SELECT {tableName}.* FROM `{srcDBName}`.`{tableName}` JOIN `{srcDBName}`.`{definition.ForeignTable}` ON {tableName}.{definition.Column} = {definition.FK} AND {definition.Filter} {definition.Operator} '{value}' {extraFilter}";
 
                     sqlCommandList.Add(sqlCommandText);
                 });
@@ -236,7 +235,7 @@ namespace SmsoMigration.Domain
             TableNames.Where(tableName => !IsTableMatched(tableName, definitions)).ToList().ForEach(tableName =>
             {
                 // copy table now.
-                string sqlCommandText = $"CREATE TABLE IF NOT EXISTS `{destDBName}`.`{tableName}` LIKE {tableName}; INSERT INTO `{destDBName}`.`{tableName}` SELECT {tableName}.* FROM `{srcDBName}`.`{tableName}`";
+                string sqlCommandText = $"CREATE TABLE IF NOT EXISTS `{destDBName}`.`{tableName}` LIKE `{srcDBName}`.`{tableName}`; INSERT INTO `{destDBName}`.`{tableName}` SELECT {tableName}.* FROM `{srcDBName}`.`{tableName}`";
 
                 sqlCommandList.Add(sqlCommandText);
             });
