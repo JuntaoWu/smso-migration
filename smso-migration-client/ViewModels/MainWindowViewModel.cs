@@ -248,15 +248,17 @@ namespace smso_migration_client
 
         #endregion
 
-        public void Connect()
+        public async Task<bool> Connect()
         {
             ConnectionString = $"Server={Host};Database=information_schema;Uid={UserName};Pwd={Password};";
-            IsConnected = this.migrationService.Connect(ConnectionString);
+            IsConnected = await this.migrationService.Connect(ConnectionString);
 
             var list = this.migrationService.Databases.Select(name => new DatabaseNameEntry(name)).ToList();
 
             DatabaseViewModel.SrcDatabaseEntries = new ListCollectionView(list);
             DatabaseViewModel.DestDatabaseEntries = new ListCollectionView(list);
+
+            return IsConnected;
         }
 
         public void OpenFile()
