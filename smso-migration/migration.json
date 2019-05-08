@@ -25,6 +25,18 @@
       "ExtraFilter": ""
     },
     {
+      "TableName": "data_data_history",
+      "Condition": "equals",
+      "Description": "",
+      "Column": "dataId",
+      "ForeignTable": "t130",
+      "FK": "t130.id",
+      "Filter": "t130.c03",
+      "Operator": "=",
+      "Value": "id",
+      "ExtraFilter": ""
+    },
+    {
       "TableName": "data_del_record",
       "Condition": "equals",
       "Description": "",
@@ -59,18 +71,6 @@
       "Operator": "=",
       "Value": "id",
       "ExtraFilter": "data_del_record.dataclassCode = 't126'"
-    },
-    {
-      "TableName": "data_data_history",
-      "Condition": "equals",
-      "Description": "",
-      "Column": "dataId",
-      "ForeignTable": "t130",
-      "FK": "t130.id",
-      "Filter": "t130.c03",
-      "Operator": "=",
-      "Value": "id",
-      "ExtraFilter": ""
     },
     {
       "TableName": "data_record_t117",
@@ -145,6 +145,18 @@
       "ExtraFilter": ""
     },
     {
+      "TableName": "fund_change_subsidies",
+      "Condition": "contains",
+      "Description": "",
+      "Column": "unit_id",
+      "ForeignTable": "t111",
+      "FK": "t111.id",
+      "Filter": "t111.id",
+      "Operator": "=",
+      "Value": "id",
+      "ExtraFilter": ""
+    },
+    {
       "TableName": "fund_check_fail",
       "Condition": "equals",
       "Description": "",
@@ -157,7 +169,19 @@
       "ExtraFilter": ""
     },
     {
-      "TableName": "fund_salary_fill_subsidies",
+      "TableName": "fund_salary_fill",
+      "Condition": "contains",
+      "Description": "",
+      "Column": "unit_id",
+      "ForeignTable": "t111",
+      "FK": "t111.id",
+      "Filter": "t111.id",
+      "Operator": "=",
+      "Value": "id",
+      "ExtraFilter": ""
+    },
+    {
+      "TableName": "fund_salary_pay",
       "Condition": "contains",
       "Description": "",
       "Column": "unit_id",
@@ -181,7 +205,31 @@
       "ExtraFilter": ""
     },
     {
+      "TableName": "fund_subsidies_byyb",
+      "Condition": "equals",
+      "Description": "",
+      "Column": "unit_id",
+      "ForeignTable": "t111",
+      "FK": "t111.id",
+      "Filter": "t111.id",
+      "Operator": "=",
+      "Value": "id",
+      "ExtraFilter": ""
+    },
+    {
       "TableName": "fund_total_gov",
+      "Condition": "equals",
+      "Description": "",
+      "Column": "unit_id",
+      "ForeignTable": "t111",
+      "FK": "t111.id",
+      "Filter": "t111.id",
+      "Operator": "=",
+      "Value": "id",
+      "ExtraFilter": ""
+    },
+    {
+      "TableName": "fund_total_ins",
       "Condition": "equals",
       "Description": "",
       "Column": "unit_id",
@@ -205,7 +253,31 @@
       "ExtraFilter": ""
     },
     {
+      "TableName": "fund_total_person_ins",
+      "Condition": "equals",
+      "Description": "",
+      "Column": "unit_id",
+      "ForeignTable": "t111",
+      "FK": "t111.id",
+      "Filter": "t111.id",
+      "Operator": "=",
+      "Value": "id",
+      "ExtraFilter": ""
+    },
+    {
       "TableName": "fund_total_person_type_gov",
+      "Condition": "equals",
+      "Description": "",
+      "Column": "unit_id",
+      "ForeignTable": "t111",
+      "FK": "t111.id",
+      "Filter": "t111.id",
+      "Operator": "=",
+      "Value": "id",
+      "ExtraFilter": ""
+    },
+    {
+      "TableName": "fund_total_sub_temp",
       "Condition": "equals",
       "Description": "",
       "Column": "unit_id",
