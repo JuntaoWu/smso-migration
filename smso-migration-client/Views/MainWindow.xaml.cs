@@ -50,7 +50,14 @@ namespace smso_migration_client
         // 连接
         private void Button_Click(object sender, RoutedEventArgs e)
         {
-            this.viewModel.Connect();
+            Task.Run(async () =>
+            {
+                bool isConnected = await this.viewModel.Connect();
+                if (!isConnected)
+                {
+                    MessageBox.Show("Unable to connect database.", "Error");
+                }
+            });
         }
 
         // 浏览

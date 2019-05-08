@@ -1,6 +1,7 @@
 ﻿using MySql.Data.MySqlClient;
 using System;
 using System.Collections.Generic;
+using System.Data.Common;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -16,7 +17,7 @@ namespace SmsoMigration.Domain
         public event EventHandler<MigratingMessageEventArgs> OnMigrating = (sender, args) => { };
         public event EventHandler<MigratingMessageEventArgs> OnMigrated = (sender, args) => { };
 
-        public bool Connect(string connectionString)
+        public async Task<bool> Connect(string connectionString)
         {
             Databases = new List<string>();
 
@@ -24,11 +25,11 @@ namespace SmsoMigration.Domain
             {
                 try
                 {
-                    mySqlConnection.Open();
+                    await mySqlConnection.OpenAsync();
 
                     MySqlCommand command = mySqlConnection.CreateCommand();
                     command.CommandText = $"SHOW DATABASES;";
-                    MySqlDataReader reader = command.ExecuteReader();
+                    DbDataReader reader = await command.ExecuteReaderAsync();
 
                     while (reader.Read())
                     {
