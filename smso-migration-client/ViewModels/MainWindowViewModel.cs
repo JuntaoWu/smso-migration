@@ -317,6 +317,24 @@ namespace smso_migration_client
             this.migrationService.Exec(srcDBName, destDBName, ConnectionString, TableDefinitions, unitCodeList, IsExtractingCommonTable);
         }
 
+        public void ExecCopyHistory()
+        {
+            string srcDBName = DatabaseViewModel.SrcDatabaseEntry;
+            string destDBName = DatabaseViewModel.DestDatabaseEntry;
+
+            List<string> unitCodeList = new List<string> { UnitCodeParam };
+
+            if (File.Exists(UnitCodeParam))
+            {
+                unitCodeList = File.ReadAllLines(UnitCodeParam).ToList();
+            }
+
+            this.IsExecuting = true;
+            this.StatusMessage = "Migration Started.";
+
+            this.migrationService.ExecCopyHistory(srcDBName, destDBName, ConnectionString, TableDefinitions, unitCodeList);
+        }
+
         public void Reset()
         {
             this.IsExecuting = false;

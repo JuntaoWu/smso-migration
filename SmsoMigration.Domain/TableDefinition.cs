@@ -8,15 +8,17 @@ namespace SmsoMigration.Domain
     {
         public string TableName { get; set; }
 
+        public string MatchCondition { get; set; }
+
         public string Description { get; set; }
 
-        public string Condition { get; set; }
+        public string Type { get; set; }
 
-        public string Column { get; set; }
+        public string ForeignKey { get; set; }
 
         public string ForeignTable { get; set; }
 
-        public string FK { get; set; }
+        public string ForeignTablePrimaryKey { get; set; }
 
         public string Filter { get; set; }
 
@@ -24,7 +26,9 @@ namespace SmsoMigration.Domain
 
         public string Value { get; set; }
 
-        public string ExtraFilter { get; set; }
+        public string ExtraWhereClause { get; set; }
+
+        public string DataClassTable { get; set; }
 
     }
 }

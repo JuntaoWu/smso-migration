@@ -65,7 +65,7 @@ namespace SmsoMigration.Domain
             List<string> scriptUnitList = new List<string>();
             unitCodeList.ForEach(unitCode =>
             {
-                Dictionary<string, object> unitDataDictionary = GetUnitData(srcDBName, connectionString, unitCode);
+                Dictionary<string, object> unitDataDictionary = GetUnitInformation(srcDBName, connectionString, unitCode);
 
                 if (unitDataDictionary == null || !unitDataDictionary.ContainsKey("id"))
                 {
@@ -83,6 +83,36 @@ namespace SmsoMigration.Domain
             Task.Factory.StartNew(() =>
             {
                 ExecuteSqlCommandList(connectionString, scriptCommonList.Concat(scriptUnitList).ToList());
+            });
+        }
+
+        public void ExecCopyHistory(string srcDBName, string destDBName, string connectionString, List<TableDefinition> definitions, List<string> unitCodeList)
+        {
+            TableNames = GetTableNames(srcDBName, connectionString);
+
+            List<string> scriptUnitList = new List<string>();
+            unitCodeList.ForEach(unitCode =>
+            {
+                Dictionary<string, object> unitDataDictionary = GetUnitInformation(srcDBName, connectionString, unitCode);
+
+                if (unitDataDictionary == null || !unitDataDictionary.ContainsKey("id"))
+                {
+                    throw new Exception("t111中没有对应数据");
+                }
+
+                var sqlList = ExtractUnitData(srcDBName, destDBName, definitions, unitDataDictionary);
+                scriptUnitList.AddRange(sqlList);
+            });
+
+            ExtractOtherHistoryData(srcDBName, destDBName, definitions);
+
+            OnSqlGenerating(this, new SqlGeneratingEventArgs { Scripts = scriptUnitList, GeneratingType = GeneratingType.Unit });
+
+            OnSqlGenerated(this, null);
+
+            Task.Factory.StartNew(() =>
+            {
+                ExecuteSqlCommandList(connectionString, scriptUnitList.ToList());
             });
         }
 
@@ -165,12 +195,15 @@ namespace SmsoMigration.Domain
             var filteredDefinitions = definitions.Where(def =>
             {
                 bool isMatch = false;
-                switch (def.Condition)
+                switch (def.MatchCondition)
                 {
-                    case "equals":
-                        isMatch = def.TableName == tableName;
+                    case MatchCondition.ConditionEquals:
+                        isMatch = tableName == def.TableName;
                         break;
-                    case "contains":
+                    case MatchCondition.ConditionStartsWith:
+                        isMatch = tableName.StartsWith(def.TableName);
+                        break;
+                    case MatchCondition.ConditionContains:
                         isMatch = tableName.Contains(def.TableName);
                         break;
                     case "startswith":
@@ -193,11 +226,38 @@ namespace SmsoMigration.Domain
 
                 filteredDefinitions.ForEach(definition =>
                 {
-                    string value = unitDataDictionary[definition.Value].ToString();
-                    string extraFilter = string.IsNullOrWhiteSpace(definition.ExtraFilter) ? "" : $"AND {definition.ExtraFilter}";
+                    if (definition.Type == DefinitionType.Skip)
+                    {
+                        return;  // Skip: continue to next definition.
+                    }
 
-                    // copy table sqlCommandText.
-                    string sqlCommandText = $"CREATE TABLE IF NOT EXISTS `{destDBName}`.`{tableName}` LIKE `{srcDBName}`.`{tableName}`; INSERT INTO `{destDBName}`.`{tableName}` SELECT {tableName}.* FROM `{srcDBName}`.`{tableName}` JOIN `{srcDBName}`.`{definition.ForeignTable}` ON {tableName}.{definition.Column} = {definition.FK} AND {definition.Filter} {definition.Operator} '{value}' {extraFilter}";
+                    // Default: Copy whole table.
+                    string sqlCommandText = $"CREATE TABLE IF NOT EXISTS `{destDBName}`.`{tableName}` LIKE `{srcDBName}`.`{tableName}`; " +
+                                            $"INSERT INTO `{destDBName}`.`{tableName}` " +
+                                            $"SELECT {tableName}.* FROM `{srcDBName}`.`{tableName}` ";
+
+                    // Extract: Append Join & Where
+                    if (definition.Type == DefinitionType.Extract)
+                    {
+                        string value = unitDataDictionary[definition.Value].ToString();
+                        string extraWhereClause = string.IsNullOrWhiteSpace(definition.ExtraWhereClause) ? "" : $"AND {definition.ExtraWhereClause}";
+
+                        if (string.IsNullOrWhiteSpace(definition.DataClassTable))
+                        {
+                            sqlCommandText += $"JOIN `{srcDBName}`.`{definition.ForeignTable}` ON {tableName}.{definition.ForeignKey} =  {definition.ForeignTablePrimaryKey} " +
+                                              $"WHERE {definition.Filter} {definition.Operator} '{value}' {extraWhereClause}";
+                        }
+                        else
+                        {
+                            // If DataClassTable exists:
+                            // SELECT * FROM Table
+                            // JOIN DataClassTable ON Table.dataId = DataClassTable.id
+                            // JOIN ForeignTable ON DataClassTable.Column = ForeignTable.FK
+                            sqlCommandText += $"JOIN `{srcDBName}`.`{definition.DataClassTable}` ON {tableName}.dataId = {definition.DataClassTable}.id " +
+                                              $"JOIN `{srcDBName}`.`{definition.ForeignTable}` ON {definition.DataClassTable}.{definition.ForeignKey} = {definition.ForeignTablePrimaryKey} " +
+                                              $"WHERE {definition.Filter} {definition.Operator} '{value}' {extraWhereClause}";
+                        }
+                    }
 
                     sqlCommandList.Add(sqlCommandText);
                 });
@@ -206,7 +266,24 @@ namespace SmsoMigration.Domain
             return sqlCommandList;
         }
 
-        private Dictionary<string, object> GetUnitData(string srcDBName, string connectionString, string unitCode)
+        private List<string> ExtractOtherHistoryData(string srcDBName, string destDBName, List<TableDefinition> definitions)
+        {
+            TableDefinition tableDefinition = definitions.First();
+            string tableName = tableDefinition.TableName;
+            List<string> sqlCommandList = new List<string>();
+
+            List<string> dataClassCodeList = definitions.Select(definition => $"'{definition.TableName}'").ToList();
+
+            string sqlCommandText = $"CREATE TABLE IF NOT EXISTS `{destDBName}`.`{tableName}` LIKE `{srcDBName}`.`{tableName}`; " +
+                                    $"INSERT INTO `{destDBName}`.`{tableName}` " +
+                                    $"SELECT {tableName}.* FROM `{srcDBName}`.`{tableName}` " +
+                                    $"WHERE {tableName}.dataclassCode NOT IN ({string.Join(",", dataClassCodeList)})";
+            sqlCommandList.Add(sqlCommandText);
+
+            return sqlCommandList;
+        }
+
+        private Dictionary<string, object> GetUnitInformation(string srcDBName, string connectionString, string unitCode)
         {
             // read FK value first.
             string preSqlCommandText = $"SELECT * FROM `{srcDBName}`.`t111` WHERE c01 = '{unitCode}'";

@@ -46,6 +46,9 @@
             <Button IsEnabled="{Binding IsExecEnabled}" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" Margin="195,235,0,0" Click="Button_Click_2">
                 <Label>执行</Label>
             </Button>
+            <Button IsEnabled="{Binding IsExecEnabled}" HorizontalAlignment="Left" VerticalAlignment="Top" Width="152" Margin="118,275,0,0" Click="Button_Click_3">
+                <Label>拷贝data__data__history</Label>
+            </Button>
             <Label Content="{Binding StatusMessage}" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="118,332,0,0"/>
         </Grid>
         <TabControl DockPanel.Dock="Right">

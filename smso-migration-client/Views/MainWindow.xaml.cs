@@ -109,5 +109,40 @@ namespace smso_migration_client
             }
 
         }
+
+        private void Button_Click_3(object sender, RoutedEventArgs e)
+        {
+            if (!this.viewModel.IsExecEnabled)
+            {
+                return;
+            }
+
+            var checkResult = this.viewModel.CheckIsExecValid();
+
+            if (checkResult.Severity == ViewModels.Severity.Error)
+            {
+                MessageBox.Show(checkResult.Message);
+                return;
+            }
+
+            if (checkResult.Severity == ViewModels.Severity.Warning)
+            {
+                var confirmationResult = MessageBox.Show(checkResult.Message, "Warning", MessageBoxButton.OKCancel, MessageBoxImage.Warning);
+                if (confirmationResult == MessageBoxResult.Cancel)
+                {
+                    return;
+                }
+            }
+
+            try
+            {
+                this.viewModel.Exec();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                this.viewModel.Reset();
+            }
+        }
     }
 }
