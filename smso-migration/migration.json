@@ -1,30 +1,6 @@
 {
   "definitions": [
     {
-      "TableName": "cz_pay",
-      "Condition": "equals",
-      "Description": "",
-      "Column": "DWID",
-      "ForeignTable": "t111",
-      "FK": "t111.c01",
-      "Filter": "t111.id",
-      "Operator": "=",
-      "Value": "id",
-      "ExtraFilter": ""
-    },
-    {
-      "TableName": "czys_pay",
-      "Condition": "equals",
-      "Description": "",
-      "Column": "DWID",
-      "ForeignTable": "t111",
-      "FK": "t111.c01",
-      "Filter": "t111.id",
-      "Operator": "=",
-      "Value": "id",
-      "ExtraFilter": ""
-    },
-    {
       "TableName": "data_data_history",
       "Condition": "equals",
       "Description": "",
@@ -410,7 +386,7 @@
     },
     {
       "TableName": "t126",
-      "Condition": "equals",
+      "Condition": "startswith",
       "Description": "基层单位人员基础信息",
       "Column": "c01",
       "ForeignTable": "t111",
