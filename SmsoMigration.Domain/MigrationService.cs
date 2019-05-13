@@ -206,9 +206,6 @@ namespace SmsoMigration.Domain
                     case MatchCondition.ConditionContains:
                         isMatch = tableName.Contains(def.TableName);
                         break;
-                    case "startswith":
-                        isMatch = tableName.StartsWith(def.TableName);
-                        break;
                 }
                 return isMatch;
             });
